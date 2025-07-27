@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Простой реальный чат</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        #messages { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #messageInput { width: 70%; padding: 8px; }
+        button { padding: 8px 15px; }
+        .message { margin: 5px 0; }
+        .username { font-weight: bold; color: #3366cc; }
+    </style>
+</head>
+<body>
+    <h1>Простой реальный чат</h1>
+    <div>
+        <input type="text" id="usernameInput" placeholder="Ваше имя" value="Пользователь">
+    </div>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Введите сообщение...">
+    <button onclick="sendMessage()">Отправить</button>
+
+    <!-- Подключаем Firebase -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6V43FGVr0ESrY0nM0ldNFilo2t7JEp-4",
+            authDomain: "test-b2cb7.firebaseapp.com",
+            projectId: "test-b2cb7",
+            storageBucket: "test-b2cb7.appspot.com",
+            messagingSenderId: "671358522571",
+            appId: "1:671358522571:web:a2300ecbe7f42f037bf74e",
+            measurementId: "G-EHVPCCKEZN",
+            databaseURL: "https://test-b2cb7-default-rtdb.firebaseio.com/" // Добавьте этот параметр
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Загружаем сообщения при загрузке страницы
+        window.onload = function() {
+            // Слушаем новые сообщения в реальном времени
+            const messagesRef = ref(database, 'messages');
+            onValue(messagesRef, (snapshot) => {
+                const messages = snapshot.val() || {};
+                displayMessages(messages);
+            });
+        };
+        
+        // Функция отправки сообщения
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const usernameInput = document.getElementById('usernameInput');
+            const message = input.value.trim();
+            const username = usernameInput.value.trim() || 'Аноним';
+            
+            if (message) {
+                // Отправляем сообщение в базу данных
+                const messagesRef = ref(database, 'messages');
+                const newMessageRef = push(messagesRef);
+                set(newMessageRef, {
+                    text: message,
+                    username: username,
+                    time: new Date().toLocaleTimeString()
+                });
+                
+                // Очищаем поле ввода
+                input.value = '';
+            }
+        }
+    
+        // Функция отображения сообщений
+        function displayMessages(messages) {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            Object.values(messages).forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.innerHTML = `
+                    <span class="username">${msg.username}</span>
+                    [${msg.time}]: ${msg.text}
+                `;
+                messagesDiv.appendChild(messageElement);
+            });
+            
+            // Прокручиваем вниз
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
